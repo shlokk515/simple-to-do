@@ -1,165 +1,86 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:navbar_router/navbar_router.dart';
+import 'package:intl/intl.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
-
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
   @override
-  State<HomePage> createState() => _HomePageState();
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
-const Color mediumPurple = Color.fromRGBO(79, 0, 241, 1.0);
-final List<Color> colors = [mediumPurple, Colors.orange, Colors.teal];
-
-class _HomePageState extends State<HomePage> {
-  List<NavbarItem> items = [
-    NavbarItem(Icons.home, 'Home', backgroundColor: colors[0]),
-    NavbarItem(Icons.shopping_bag, 'Products', backgroundColor: colors[1]),
-    NavbarItem(Icons.person, 'Me', backgroundColor: colors[2]),
-    NavbarItem(Icons.settings, 'Settings', backgroundColor: colors[0]),
-  ];
-
-  final Map<int, Map<String, Widget>> _routes = const {
-    0: {
-      '/': HomeFeeds(),
-      FeedDetail.route: FeedDetail(),
-    },
-    1: {
-      '/': ProductList(),
-      ProductDetail.route: ProductDetail(),
-      ProductComments.route: ProductComments(),
-    },
-    2: {
-      '/': UserProfile(),
-      ProfileEdit.route: ProfileEdit(),
-    },
-    3: {
-      '/': Settings(),
-    },
-  };
-
-  void showSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(milliseconds: 600),
-        margin: EdgeInsets.only(
-            bottom: kBottomNavigationBarHeight, right: 2, left: 2),
-        content: Text('Tap back button again to exit'),
-      ),
-    );
-  }
-
-  void hideSnackBar() {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-  }
-
-  DateTime oldTime = DateTime.now();
-  DateTime newTime = DateTime.now();
-
-  /// This is only for demo purposes
-  void simulateTabChange() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      for (int i = 0; i < items.length * 2; i++) {
-        NavbarNotifier.index = i % items.length;
-        await Future.delayed(const Duration(milliseconds: 1000));
-      }
-    });
-  }
+class _MyHomePageState extends State<MyHomePage> {
+  final amountNumController = TextEditingController();
+  final dateInput = TextEditingController();
 
   @override
   void initState() {
+    dateInput.text = "";
     super.initState();
-    // simulateTabChange();
-    NavbarNotifier.addIndexChangeListener((x) {
-      print('NavbarNotifier.indexChangeListener: $x');
-    });
   }
 
   @override
   void dispose() {
-    NavbarNotifier.clear();
+    amountNumController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 60.0),
-        child: FloatingActionButton(
-          child: Icon(NavbarNotifier.isNavbarHidden
-              ? Icons.toggle_off
-              : Icons.toggle_on),
-          onPressed: () {
-            // Programmatically toggle the Navbar visibility
-            if (NavbarNotifier.isNavbarHidden) {
-              NavbarNotifier.hideBottomNavBar = false;
-            } else {
-              NavbarNotifier.hideBottomNavBar = true;
-            }
-            setState(() {});
-          },
+        appBar: AppBar(
+          title: const Text('Flutter Demo Click Counter'),
         ),
-      ),
-      body: NavbarRouter(
-        errorBuilder: (context) {
-          return const Center(child: Text('Error 404'));
-        },
-        isDesktop: size.width > 600 ? true : false,
-        onBackButtonPressed: (isExitingApp) {
-          if (isExitingApp) {
-            newTime = DateTime.now();
-            int difference = newTime.difference(oldTime).inMilliseconds;
-            oldTime = newTime;
-            if (difference < 1000) {
-              hideSnackBar();
-              return isExitingApp;
-            } else {
-              showSnackBar();
-              return false;
-            }
-          } else {
-            return isExitingApp;
-          }
-        },
-        initialIndex: 2,
-        type: NavbarType.material3,
-        destinationAnimationCurve: Curves.fastOutSlowIn,
-        destinationAnimationDuration: 600,
-        decoration: M3NavbarDecoration(
-            labelTextStyle: const TextStyle(
-                color: Color.fromARGB(255, 176, 207, 233), fontSize: 14),
-            elevation: 3.0,
-            backgroundColor: Colors.indigo,
-            indicatorShape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(20)),
-            ),
-            indicatorColor: const Color.fromARGB(255, 176, 207, 233),
-            // iconTheme: const IconThemeData(color: Colors.indigo),
-            /// labelTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow),
-        onChanged: (x) {},
-        backButtonBehavior: BackButtonBehavior.rememberHistory,
-        destinations: [
-          for (int i = 0; i < items.length; i++)
-            DestinationRouter(
-              navbarItem: items[i],
-              destinations: [
-                for (int j = 0; j < _routes[i]!.keys.length; j++)
-                  Destination(
-                    route: _routes[i]!.keys.elementAt(j),
-                    widget: _routes[i]!.values.elementAt(j),
-                  ),
-              ],
-              initialRoute: _routes[i]!.keys.first,
-            ),
-        ],
-      ),
-    );
+        body: Column(
+          children: [
+            Container(
+                padding: const EdgeInsets.all(15),
+                height: MediaQuery.of(context).size.width / 3,
+                child: Center(
+                    child: TextField(
+                  controller: dateInput,
+                  //editing controller of this TextField
+                  decoration: const InputDecoration(
+                      icon: Icon(Icons.calendar_today), //icon of text field
+                      labelText: "Enter Date" //label text of field
+                      ),
+                  readOnly: true,
+                  //set it true, so that user will not able to edit text
+                  onTap: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(1950),
+                        //DateTime.now() - not to allow to choose before today.
+                        lastDate: DateTime(2100));
+
+                    if (pickedDate != null) {
+                      // print(pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
+                      String formattedDate =
+                          DateFormat('yyyy-MM-dd').format(pickedDate);
+                      // print(formattedDate); //formatted date output using intl package =>  2021-03-16
+                      setState(() {
+                        dateInput.text =
+                            formattedDate; //set output date to TextField value.
+                      });
+                    } else {}
+                  },
+                ))),
+            ActionChip(
+              avatar: CircleAvatar(
+                backgroundColor: Colors.grey.shade800,
+                child: const Text('AB'),
+              ),
+              label: const Text('Aaron Burr'),
+              onPressed: () {
+                print("${dateInput.text}");
+              },
+            )
+          ],
+        )
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: () {},
+        //   tooltip: 'Increment',
+        //   child: const Icon(Icons.add),
+        // ),
+        );
   }
 }
